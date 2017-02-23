@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.regex.Pattern;
 
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.InputStreamEntity;
@@ -38,6 +39,8 @@ import org.apache.http.entity.InputStreamEntity;
 public abstract class BodyRequestBuilder extends
         RequestBuilder {
 
+    private static final Pattern CHECKSUM_PATTERN = Pattern.compile("(sha1|sha256|md5)=.*");
+    
     /**
      * Instantiate builder
      * 
@@ -92,14 +95,19 @@ public abstract class BodyRequestBuilder extends
     }
 
     /**
-     * Provide a SHA-1 checksum for the body of this request
+     * Provide a checksum for the body of this request. Defaults to sha1 if
+     * algorithm not specified.
      * 
-     * @param digest sha-1 checksum to provide as the digest for the request body
+     * @param digest checksum to provide as the digest for the request body
      * @return this builder
      */
     protected BodyRequestBuilder digest(final String digest) {
         if (digest != null) {
-            request.addHeader(DIGEST, "sha1=" + digest);
+            if (CHECKSUM_PATTERN.matcher(digest).matches()) {
+                request.addHeader(DIGEST, digest);
+            } else {
+                request.addHeader(DIGEST, "sha1=" + digest);
+            }
         }
         return this;
     }
